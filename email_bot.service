@@ -1,0 +1,15 @@
+[Unit]
+Description=Self Hosted Email Bot Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/Email_Bot/bot.py
+WorkingDirectory=/opt/Email_Bot/
+Restart=always
+RestartSec=60
+User=<YOUR_USER_HERE>
+
+[Install]
+WantedBy=default.target
+
