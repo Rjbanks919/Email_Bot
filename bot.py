@@ -7,13 +7,15 @@ Functions:
     get_header_value
     authenticate_gmail
     get_latest_email
-    extract_image_url
     download_image
     send_response_email
     parse_command
     main
 
 Usage:
+    Make sure you have your credentials.json file placed at /opt/Email_Bot/
+    before running the script!
+
     $ python3 bot.py
 """
 
@@ -43,16 +45,28 @@ import requests
 CREDENTIALS_PATH = "/opt/Email_Bot/credentials.json"
 TOKEN_PATH = "/opt/Email_Bot/token.json"
 
-# If modifying these SCOPES, delete the file token.json.
+# If modifying these scopes, delete the file token.json.
 OAUTH_SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.send',
     'https://www.googleapis.com/auth/gmail.modify'
 ]
 
+# This is the email that the bot will respond to commands from
 ALLOWED_USER = '<YOUR_EMAIL_HERE>'
 
-def get_header_value(payload, header_name):
+
+def get_header_value(payload, header_name: str) -> str:
+    """
+    Retrieves a value out of the email data header.
+
+    Args:
+        payload (?): Email payload containing headers.
+        header_name (str): Name of the header to find.
+
+    Returns:
+        str: The value associated with the header.
+    """
     for header in payload['headers']:
         if header['name'] == header_name:
             return header['value']
@@ -61,6 +75,12 @@ def get_header_value(payload, header_name):
 
 
 def authenticate_gmail():
+    """
+    Authenticates the script using provided credentials/token.
+
+    Note:
+        If a token does not exist, it will begin the generation process.
+    """
     creds = None
 
     if os.path.exists(TOKEN_PATH):
@@ -79,7 +99,17 @@ def authenticate_gmail():
 
     return creds
 
+
 def get_latest_email(service):
+    """
+    Retrieves the newest email in the bot's email inbox.
+
+    Args:
+        service (?): Email service handle?
+
+    Returns:
+        (str, str): Tuple containing email sender and subject.
+    """
     # Get the latest email
     results = service.users().messages().list(userId='me', labelIds=['INBOX']).execute()
     messages = results.get('messages', [])
@@ -100,25 +130,15 @@ def get_latest_email(service):
 
     return None
 
-def extract_image_url(message):
-    # Extract the image URL from the email content
-    # Modify this part based on your email content structure
-    for part in message['payload']['parts']:
-        if part['mimeType'] == 'text/html':
-            data = part['body']['data']
-            html_content = base64.urlsafe_b64decode(data).decode('utf-8')
-
-            # Modify the parsing logic based on your actual email structure
-            # This is a simple example assuming the image URL is in an <img> tag
-            start_index = html_content.find('<img src="') + len('<img src="')
-            end_index = html_content.find('"', start_index)
-            image_url = html_content[start_index:end_index]
-
-            return image_url
-
-    return None
 
 def download_image(image_url, save_path):
+    """
+    Downloads an image from a provided URL.
+
+    Args:
+        image_url (str): URL of the image to download.
+        save_path (str): Path to save the downloaded image to.
+    """
     # Download the image from the URL
     response = requests.get(image_url)
 
@@ -126,8 +146,16 @@ def download_image(image_url, save_path):
         file.write(response.content)
 
 
-
 def send_response_email(to_address, subject, body, attachment_paths=None):
+    """
+    Sends a response email containing requested data.
+
+    Args:
+        to_address (str): Email address to send to.
+        subject (str): Subject of the email.
+        body (?): Body of the email.
+        attachment_paths (list(str)): Paths to attachments for the email.
+    """
     creds = authenticate_gmail()  # Make sure this function is properly implemented
 
     msg = MIMEMultipart()
@@ -157,6 +185,15 @@ def send_response_email(to_address, subject, body, attachment_paths=None):
 
 
 def parse_command(sender_subject):
+    """
+    Parses a command from an email subject line.
+
+    Args:
+        sender_subject (str): Subject of the received command email.
+
+    Returns:
+        str: Parsed command.
+    """
     pattern = r"^cmd: (\w+)$"
 
     match = re.search(pattern, sender_subject[1])
@@ -169,6 +206,9 @@ def parse_command(sender_subject):
 
 
 def main():
+    """
+    Main function bro, are you a cop?
+    """
     creds = authenticate_gmail()
     service = build('gmail', 'v1', credentials=creds)
 
@@ -195,6 +235,7 @@ def main():
             email_subject = 'Response with Image'
             email_body = 'Here is the image you requested!'
             send_response_email(to_email, email_subject, email_body, [front_save_path, back_save_path])
+
 
 if __name__ == '__main__':
     main()
