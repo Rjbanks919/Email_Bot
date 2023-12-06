@@ -22,6 +22,20 @@ In order to use this project you will need:
 modify, and create emails on the behalf of the email from **number 2**. Once
 you have created your credential file, save it as `credentials.json`.
 
+### PyPI Packages
+
+There are a few PyPI packages that you'll need to install to run the `bot.py`
+script. Install them with:
+
+```bash
+$ python3 -m pip install \
+    google-auth \
+    google-auth-oauthlib \
+    google-auth-httplib2 \
+    google-api-python-client \
+    requests
+```
+
 ### Authenticating with Google
 
 To create the systemd service, we need to setup the required files first.
